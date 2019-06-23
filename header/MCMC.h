@@ -53,7 +53,7 @@ void MCMC(){
 
         tA=A;
         r=rand()/(RAND_MAX+0.0)-0.5;
-        A*=exp(r*0.4);
+        A*=exp(r*0.5);
 
         tB=B;
         r=rand()/(RAND_MAX+0.0)-0.5;
@@ -61,7 +61,7 @@ void MCMC(){
 
         tI0=I0;
         r=rand()/(RAND_MAX+0.0)-0.5;
-        I0*=exp(r*0.5);
+        I0*=exp(r*0.2);
 
         // random change tree
         TEMPTREE=cloneTree(TREE,NULL);
