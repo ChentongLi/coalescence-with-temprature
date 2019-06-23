@@ -15,20 +15,11 @@ double Tempreture(double t)
     return TEM[x];
 }
 
-double birds(double t)
-{
-    if (t<0) t+=365;
-    if (t<273 && t>74) return 0.0;
-    if (t>0 && t<=74) return cos(M_PI/83*(t+92)+M_PI)+1;
-    return cos(M_PI/83*(t-273)+M_PI)+1;
-}
-
 ODE *solution;
 double dt=0.01;
 
 double A=0.01;
 double B=0.01;
-double C=10;
 double mu=10;
 double Te=5;
 double I0=5000;
@@ -38,7 +29,7 @@ ODE solver(ODE tmp){
     ODE result;
     result.t=tmp.t+dt;
     double tp=(Tempreture(tmp.t)-Te)/mu;
-    result.I=tmp.I+dt*((A+B*exp(-tp*tp))*tmp.I+C*birds(tmp.t));
+    result.I=tmp.I+dt*((A+B*exp(-tp*tp))*tmp.I;
     result.lamb=1.0/result.I;
     return result;
 }
