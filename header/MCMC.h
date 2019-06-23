@@ -28,8 +28,8 @@ void MCMC(){
     int id=getpid();
     char fname[30];
 
-    double tl,tI0,tTe;
-    double tmu,tA,tB,tC;
+    double tl,tI0;
+    double tmu,tA,tB;
 
     srand(time(0)*id);
     initTem();
@@ -59,17 +59,9 @@ void MCMC(){
         r=rand()/(RAND_MAX+0.0)-0.5;
         B*=exp(r*0.5);
 
-        tC=C;
-        r=rand()/(RAND_MAX+0.0)-0.5;
-        C*=exp(r*0.5);
-
         tI0=I0;
         r=rand()/(RAND_MAX+0.0)-0.5;
         I0*=exp(r*0.5);
-
-        tTe=Te;
-        r=rand()/(RAND_MAX+0.0)-0.5;
-        Te*=exp(r*0.1);
 
         // random change tree
         TEMPTREE=cloneTree(TREE,NULL);
@@ -98,18 +90,16 @@ void MCMC(){
              printf("%lf %lf %d\n",llhood1,llhood2,ncount);
             // if (ncount>10000) printf("%e\t%e\t%e\t%e\t%lf\t%lf\t%lf\t%lf\n",
             // lambda,A,B,C,I0,Te,mu,TREE->NodeTime);
-             fprintf(fp,"%e\t%e\t%e\t%e\t%lf\t%lf\t%lf\t%lf\n",
-             lambda,A,B,C,I0,Te,mu,TREE->NodeTime);
+             fprintf(fp,"%e\t%e\t%e\t%lf\t%lf\t%lf\n",
+             lambda,A,B,I0,mu,TREE->NodeTime);
         }
         else{
             DestroyTree(TEMPTREE);
             lambda=tl;
             A=tA;
             B=tB;
-            C=tC;
             I0=tI0;
             mu=tmu;
-            Te=tTe;
         }
         
         ncount++;
