@@ -4,14 +4,21 @@ int Comparator(const void * a, const void * b)
     return (*(ComMat *)a).t < (*(ComMat *)b).t ? 1 : -1;
 }
 
-double my_log(double z)
+double my_log(double x)
 {
-    if (z<1e-4) return z-1;
-    else return (z-1)-(z-1)*(z-1)/2.0+(z-1)*(z-1)*(z-1)/3.0-(z-1)*(z-1)*(z-1)*(z-1)/4.0;
+    double a=(1.0+x)/2.0;
+    double b=sqrt(x);
+    while(1){
+        a=(a+b)/2.0;
+        b=sqrt(a*b);
+        if(fabs(a-b)<0.001) break;
+    }
+    return 2.0*(x-1.0)/(a+b);
 }
 
 
-double coallikelihood(BiNode *T)
+
+double coallikelihood(BiNode *T,int in)
 {
     
     ComMat *mlist;
@@ -52,10 +59,10 @@ double coallikelihood(BiNode *T)
         int j;
         double lamv=0.0;
         for(j=i1;j<=i2;j++)
-            lamv+=solution[j].lamb*dt;
+            lamv+=solution[in][j].lamb*dt;
         
         if (mlist[i].nt==-1){
-            sums+=my_log(solution[i1].lamb*(nnt-1.0)*nnt/2)-lamv*(nnt-1.0)*nnt/2.0;
+            sums+=my_log(solution[in][i1].lamb*(nnt-1.0)*nnt/2.0)-lamv*(nnt-1.0)*nnt/2.0;
             // printf("1 %lf %lf %lf %lf\n",solution[i1].lamb1,sums,solution[i1].t,solution[i1].I1);
         }
         else{

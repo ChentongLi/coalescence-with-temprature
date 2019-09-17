@@ -1,22 +1,17 @@
 int RandTime(BiNode *T){
 
     if(isTerminal(T)) return 1;
-
-    double temp=T->NodeTime;
     double childTime=MIN(T->lchi->NodeTime,T->rchi->NodeTime);
     double fatherTime;
-    double a,b;
     double r=rand()/(RAND_MAX+0.0);
     if (isRoot(T)){
-        fatherTime=temp+log(1-rand()/(RAND_MAX+1.0))*10.0;
+        fatherTime=T->NodeTime+log(1-rand()/(RAND_MAX+1.0))*10.0;
     }
     else{
         fatherTime=T->parent->NodeTime;
     }
-    a=(temp-fatherTime)/2.0;
-    b=(childTime-temp)/2.0;
-    r=r*(a+b)-a;
-    T->NodeTime=temp+r;
+
+    T->NodeTime=fatherTime+(childTime-fatherTime)*r;
     RandTime(T->lchi);
     RandTime(T->rchi);
 

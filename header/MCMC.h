@@ -1,5 +1,5 @@
 #define MAXDATASIZE 2048
-#define MAXMCTIMES 200000
+#define MAXMCTIMES 600000
 #define INF 1e20
 #define LOWBODUND -1e200
 #define MIN(x,y)  (((x)<(y)) ?  (x) : (y))
@@ -24,17 +24,26 @@ void MCMC(){
     double ALPHA,r;
     double llhood;
     double pllhood=LOWBODUND;
-    BiNode *TREE,*TEMPTREE;
+    BiNode *TREE[2],*TEMPTREE[2];
     int id=getpid();
     char fname[30];
 
-    double tl,tI0;
-    double tmu,tA,tB;
+    double tl,tI0[2],tTe;
+    double tmu[2],tA[2],tB[2];
 
     srand(time(0)*id);
-    initTem();
-    TREE=init();
+    initTem0();
+    initTem1();
 
+    while(1){
+        TREE[0]=init(0);
+        TREE[1]=init(1);
+        if (TREE[0]->NodeTime>100 && TREE[1]->NodeTime>100) break;
+        else{
+            DestroyTree(TREE[0]);
+            DestroyTree(TREE[1]);
+        }
+    }
     sprintf(fname,"result/%d_result.txt",id); // change here
     FILE *fp;
     fp=fopen(fname,"w+");
@@ -47,59 +56,78 @@ void MCMC(){
         r=rand()/(RAND_MAX+0.0)-0.5;
         lambda*=exp(r);
 
-        tmu=mu;
+        tTe=Te;
         r=rand()/(RAND_MAX+0.0)-0.5;
-        mu*=exp(r*0.1);
+        Te*=exp(r*0.1);
 
-        tA=A;
-        r=rand()/(RAND_MAX+0.0)-0.5;
-        A*=exp(r*0.5);
+        int xt;
+        for(xt=0;xt<2;xt++){
+            tA[xt]=A[xt];
+            r=rand()/(RAND_MAX+0.0)-0.5;
+            A[xt]*=exp(r*0.5);
 
-        tB=B;
-        r=rand()/(RAND_MAX+0.0)-0.5;
-        B*=exp(r*0.5);
+            tB[xt]=B[xt];
+            r=rand()/(RAND_MAX+0.0)-0.5;
+            B[xt]*=exp(r*0.5);
 
-        tI0=I0;
-        r=rand()/(RAND_MAX+0.0)-0.5;
-        I0*=exp(r*0.2);
+            tI0[xt]=I0[xt];
+            r=rand()/(RAND_MAX+0.0)-0.5;
+            I0[xt]*=exp(r*0.3);
+
+	    tmu[xt]=mu[xt];
+            r=rand()/(RAND_MAX+0.0)-0.5;
+            mu[xt]*=exp(r*0.1);
+        }
 
         // random change tree
-        TEMPTREE=cloneTree(TREE,NULL);
-        if (ncount<0.2*MAXMCTIMES){
-            RandTime(TEMPTREE);
-            TEMPTREE=SPRtheTree(TEMPTREE);
+       
+        for(xt=0;xt<2;xt++){
+            TEMPTREE[xt]=cloneTree(TREE[xt],NULL);
+            if (ncount<0.2*MAXMCTIMES){
+                RandTime(TEMPTREE[xt]);
+                TEMPTREE[xt]=SPRtheTree(TEMPTREE[xt]);
+            }
+            else{
+                RandTime(TEMPTREE[xt]);
+                TEMPTREE[xt]=NNItheTree(TEMPTREE[xt]);
+            }
+            //calculate likelihood
+            SolveOde(TEMPTREE[xt]->NodeTime,416,xt);
         }
-        else{
-            RandTime(TEMPTREE);
-            TEMPTREE=NNItheTree(TEMPTREE);
-        }
-        //calculate likelihood
-        SolveOde(TEMPTREE->NodeTime,416);
-        double llhood1=coallikelihood(TEMPTREE);
-        double llhood2=LogTreeLikelihood(TEMPTREE);
+
+        double llhood1=coallikelihood(TEMPTREE[0],0)+coallikelihood(TEMPTREE[1],1);
+        double llhood2=LogTreeLikelihood(TEMPTREE[0])+LogTreeLikelihood(TEMPTREE[1]);
         llhood=llhood1+llhood2;
         //printf("%lf %lf %d\n",tt,llhood-tt,ncount);
         ALPHA=MIN(0,llhood-pllhood);
         r=log(rand()/(RAND_MAX+0.0));
 
         if (r<ALPHA){
-             pllhood=llhood;
-             DestroyTree(TREE);
-             TREE=cloneTree(TEMPTREE,NULL);
-             DestroyTree(TEMPTREE);
-             printf("%lf %lf %d\n",llhood1,llhood2,ncount);
+            pllhood=llhood;
+            for(xt=0;xt<2;xt++){
+                DestroyTree(TREE[xt]);
+                TREE[xt]=cloneTree(TEMPTREE[xt],NULL);
+                DestroyTree(TEMPTREE[xt]);
+            }
+            printf("%lf %lf %d\n",llhood1,llhood2,ncount);
             // if (ncount>10000) printf("%e\t%e\t%e\t%e\t%lf\t%lf\t%lf\t%lf\n",
             // lambda,A,B,C,I0,Te,mu,TREE->NodeTime);
-             fprintf(fp,"%e\t%e\t%e\t%lf\t%lf\t%lf\n",
-             lambda,A,B,I0,mu,TREE->NodeTime);
+            fprintf(fp,"%e\t%lf",lambda,Te);
+            for(xt=0;xt<2;xt++){
+                 fprintf(fp,"\t%e\t%e\t%e\t%lf\t%lf",A[xt],B[xt],I0[xt],mu[xt],TREE[xt]->NodeTime);
+            }
+            fprintf(fp,"\n");
         }
         else{
-            DestroyTree(TEMPTREE);
+            for(xt=0;xt<2;xt++){
+                DestroyTree(TEMPTREE[xt]);
+                A[xt]=tA[xt];
+                B[xt]=tB[xt];
+                I0[xt]=tI0[xt];         
+		mu[xt]=tmu[xt];
+            }
             lambda=tl;
-            A=tA;
-            B=tB;
-            I0=tI0;
-            mu=tmu;
+            Te=tTe;
         }
         
         ncount++;
@@ -110,9 +138,13 @@ void MCMC(){
     FILE *ft;
     sprintf(fname,"result/%d_Tree.txt",id);
     ft=fopen(fname,"w+");
-    printTree(TREE,ft);
+    int j;
+    for(j=0;j<2;j++){
+        printTree(TREE[j],ft);
+        fprintf(ft,"\n\n");
+        DestroyTree(TREE[j]);
+    }
     fclose(ft);
-    DestroyTree(TREE);
 
 }
 

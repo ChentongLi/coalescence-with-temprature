@@ -4,9 +4,9 @@ typedef struct ComMat{
 }ComMat;
 ComMat data[2];
 
-double *TEM;
+double *TEM0,*TEM1;
 
-BiNode *init()
+BiNode *init(int indax)
 {
 
     FASTAFILE *ffp;
@@ -14,16 +14,16 @@ BiNode *init()
     char *name;
     int   L;
     char filename[100];
-	strcpy(filename,"align_data/outcds.fasta");
-
+	if (indax==0) strcpy(filename,"align_data/outcds_dongguan.fasta");
+	if (indax==1) strcpy(filename,"align_data/outcds_nanchang.fasta");
 	int n=0;
 	BiNode* S[MAXDATASIZE];
 	int top=-1;
 	ffp = OpenFASTA(filename);
 
     if (ffp==NULL) {
-        printf("wrong input!\n");
-        return NULL;
+        printf("No that file %s!\n",filename);
+        exit(1);
     }
 	data[0].t=416.0;
 	data[0].nt=0;
@@ -104,25 +104,57 @@ BiNode *init()
 	return S[top];
 }
 
-void initTem(){
+void initTem0(){
 
 	char filename[100];
-	strcpy(filename,"align_data/weather_data.txt");
+	strcpy(filename,"align_data/weather_data_dongguan.txt");
 	FILE *fp;
 	fp=fopen(filename,"r");
+	if(fp==NULL){
+		printf("NO INPUT\n");
+		exit(1);
+	}
     char str[100];
     double a;
 	int len=512,n=0;
-	TEM=malloc(sizeof(double)*len);
+	TEM0=malloc(sizeof(double)*len);
     while(!feof(fp)){
         fscanf(fp,"%s   %lf\n",str,&a);
-		TEM[n]=a;
+		TEM0[n]=a;
 		n++;
 		if(n==len){
 			len+=128;
-			TEM=realloc(TEM,sizeof(double)*len);
+			TEM0=realloc(TEM0,sizeof(double)*len);
 		}
         
     }
 	fclose(fp);
+
+}
+void initTem1(){
+
+	char filename[100];
+	strcpy(filename,"align_data/weather_data_nanchang.txt");
+	FILE *fp;
+	fp=fopen(filename,"r");
+	if(fp==NULL){
+		printf("NO INPUT\n");
+		exit(1);
+	}
+    char str[100];
+    double a;
+	int len=512,n=0;
+	TEM1=malloc(sizeof(double)*len);
+    while(!feof(fp)){
+        fscanf(fp,"%s   %lf\n",str,&a);
+		TEM1[n]=a;
+		n++;
+		if(n==len){
+			len+=128;
+			TEM1=realloc(TEM1,sizeof(double)*len);
+		}
+        
+    }
+	fclose(fp);
+
 }
